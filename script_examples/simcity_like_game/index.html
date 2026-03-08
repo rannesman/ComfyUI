@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Metropolis</title>
+  <style>
+    :root {
+      --bg: #0d1321;
+      --panel: #1d2d44;
+      --panel-2: #3e5c76;
+      --text: #f0ebd8;
+      --accent: #80ed99;
+      --danger: #ff5d8f;
+      --gold: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(62, 92, 118, 0.4), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(128, 237, 153, 0.2), transparent 40%),
+        linear-gradient(180deg, #0d1321, #121f33 60%, #0d1321);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, rgba(29,45,68,0.95), rgba(20,33,52,0.95));
+      border-right: 1px solid rgba(255,255,255,0.1);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: inset -12px 0 30px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      opacity: 0.8;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      background: rgba(62, 92, 118, 0.38);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(0,0,0,0.18));
+      color: var(--text);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+      font-weight: 600;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(128, 237, 153, 0.8);
+      box-shadow: 0 4px 18px rgba(128, 237, 153, 0.22);
+    }
+
+    button.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 6px 20px rgba(128, 237, 153, 0.22);
+      background: linear-gradient(180deg, rgba(128,237,153,0.2), rgba(0,0,0,0.28));
+    }
+
+    .legend {
+      font-size: 0.85rem;
+      line-height: 1.45;
+      opacity: 0.9;
+    }
+
+    .game-wrap {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    #game {
+      width: min(95vw, 1050px);
+      height: min(92vh, 760px);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 35px 80px rgba(0,0,0,0.45), inset 0 0 80px rgba(255,255,255,0.05);
+      background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 35%, #99d98c 70%, #6a994e 100%);
+    }
+
+    .danger { color: var(--danger); }
+    .gold { color: var(--gold); }
+
+    @media (max-width: 980px) {
+      body { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      #game { width: 95vw; height: 68vh; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div>
+      <h1>🌆 Mini Metropolis</h1>
+      <div class="subtitle">A small SimCity-style prototype.</div>
+    </div>
+
+    <section class="stats card">
+      <div class="stat-row"><span>Population</span><strong id="population">0</strong></div>
+      <div class="stat-row"><span>Treasury</span><strong id="money">$5000</strong></div>
+      <div class="stat-row"><span>Power Use</span><strong id="powerUse">0</strong></div>
+      <div class="stat-row"><span>Power Supply</span><strong id="powerSupply">0</strong></div>
+      <div class="stat-row"><span>Happiness</span><strong id="happiness">50%</strong></div>
+      <div class="stat-row"><span>Month</span><strong id="month">1</strong></div>
+    </section>
+
+    <section class="toolbar">
+      <button data-tool="residential">🏠 Residential ($120)</button>
+      <button data-tool="commercial">🏢 Commercial ($180)</button>
+      <button data-tool="industrial">🏭 Industrial ($200)</button>
+      <button data-tool="road">🛣️ Road ($25)</button>
+      <button data-tool="park">🌳 Park ($60)</button>
+      <button data-tool="powerplant">⚡ Power Plant ($900)</button>
+      <button data-tool="bulldoze">🧹 Bulldoze ($10)</button>
+      <button data-tool="inspect">🔍 Inspect</button>
+    </section>
+
+    <section class="card legend">
+      <div><strong>Tips</strong></div>
+      <ul>
+        <li>Place roads to connect zones.</li>
+        <li>Build at least one power plant early.</li>
+        <li>Parks improve happiness and growth.</li>
+        <li>If money drops below zero, growth stalls.</li>
+      </ul>
+      <div id="message" class="gold">Welcome, Mayor. Click a tool and start building.</div>
+    </section>
+  </aside>
+
+  <main class="game-wrap">
+    <canvas id="game" width="1050" height="760"></canvas>
+  </main>
+
+  <script>
+    const TILE_TYPES = {
+      empty: { cost: 0, color: '#7fb069', power: 0, jobs: 0, housing: 0, income: 0 },
+      road: { cost: 25, color: '#6b7280', power: 0, jobs: 0, housing: 0, income: -1 },
+      residential: { cost: 120, color: '#e0fbfc', power: -2, jobs: 0, housing: 36, income: 6 },
+      commercial: { cost: 180, color: '#98c1d9', power: -3, jobs: 24, housing: 0, income: 10 },
+      industrial: { cost: 200, color: '#6c757d', power: -5, jobs: 46, housing: 0, income: 14 },
+      park: { cost: 60, color: '#52b788', power: 0, jobs: 0, housing: 0, income: 1 },
+      powerplant: { cost: 900, color: '#ffb703', power: 140, jobs: 12, housing: 0, income: -16 }
+    };
+
+    const GRID_W = 28;
+    const GRID_H = 20;
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      grid: Array.from({ length: GRID_H }, () =>
+        Array.from({ length: GRID_W }, () => ({ type: 'empty', growth: 0, sparkle: Math.random() * Math.PI * 2 }))
+      ),
+      tool: 'residential',
+      money: 5000,
+      month: 1,
+      population: 0,
+      powerUse: 0,
+      powerSupply: 0,
+      happiness: 50,
+      hovered: null,
+      cameraPulse: 0
+    };
+
+    const statEls = {
+      population: document.getElementById('population'),
+      money: document.getElementById('money'),
+      powerUse: document.getElementById('powerUse'),
+      powerSupply: document.getElementById('powerSupply'),
+      happiness: document.getElementById('happiness'),
+      month: document.getElementById('month'),
+      message: document.getElementById('message')
+    };
+
+    const buttons = [...document.querySelectorAll('button[data-tool]')];
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.tool = btn.dataset.tool;
+        buttons.forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+    buttons[0].classList.add('active');
+
+    function setMessage(text, danger = false) {
+      statEls.message.textContent = text;
+      statEls.message.className = danger ? 'danger' : 'gold';
+    }
+
+    function tileAtPixel(x, y) {
+      const tileW = canvas.width / GRID_W;
+      const tileH = canvas.height / GRID_H;
+      const tx = Math.floor(x / tileW);
+      const ty = Math.floor(y / tileH);
+      if (tx < 0 || ty < 0 || tx >= GRID_W || ty >= GRID_H) return null;
+      return { tx, ty };
+    }
+
+    function hasRoadNeighbor(x, y) {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      return dirs.some(([dx,dy]) => {
+        const nx = x + dx, ny = y + dy;
+        return nx >= 0 && ny >= 0 && nx < GRID_W && ny < GRID_H && state.grid[ny][nx].type === 'road';
+      });
+    }
+
+    function applyTool(tx, ty) {
+      const tile = state.grid[ty][tx];
+
+      if (state.tool === 'inspect') {
+        setMessage(`(${tx}, ${ty}) ${tile.type} • growth ${Math.round(tile.growth)}%`);
+        return;
+      }
+
+      if (state.tool === 'bulldoze') {
+        if (tile.type !== 'empty') {
+          tile.type = 'empty';
+          tile.growth = 0;
+          state.money -= 10;
+          setMessage('Bulldozed.');
+        }
+        return;
+      }
+
+      const cfg = TILE_TYPES[state.tool];
+      if (!cfg) return;
+      if (state.money < cfg.cost) {
+        setMessage('Not enough money.', true);
+        return;
+      }
+
+      state.money -= cfg.cost;
+      tile.type = state.tool;
+      tile.growth = 5;
+      setMessage(`Placed ${state.tool}.`);
+    }
+
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      state.hovered = tileAtPixel((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
+    });
+
+    canvas.addEventListener('mouseleave', () => { state.hovered = null; });
+
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const p = tileAtPixel((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
+      if (!p) return;
+      applyTool(p.tx, p.ty);
+      recomputeEconomy();
+    });
+
+    function recomputeEconomy() {
+      let powerSupply = 0;
+      let powerUse = 0;
+      let housing = 0;
+      let jobs = 0;
+      let income = 0;
+      let parks = 0;
+      let connectedZones = 0;
+
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const type = state.grid[y][x].type;
+          const cfg = TILE_TYPES[type];
+          powerSupply += Math.max(cfg.power, 0);
+          powerUse += Math.max(-cfg.power, 0);
+          housing += cfg.housing;
+          jobs += cfg.jobs;
+          income += cfg.income;
+          if (type === 'park') parks++;
+          if (['residential','commercial','industrial'].includes(type) && hasRoadNeighbor(x, y)) connectedZones++;
+        }
+      }
+
+      const targetPopulation = Math.floor(Math.min(housing, jobs * 1.2) * 0.85);
+      const powered = powerSupply >= powerUse;
+      const roadBonus = Math.min(20, connectedZones * 0.55);
+      const parkBonus = Math.min(15, parks * 0.9);
+      const powerPenalty = powered ? 0 : 28;
+      const debtPenalty = state.money < 0 ? 20 : 0;
+      state.happiness = Math.max(0, Math.min(100, 45 + roadBonus + parkBonus - powerPenalty - debtPenalty));
+
+      const growthFactor = (state.happiness / 100) * (powered ? 1 : 0.4) * (state.money < -1000 ? 0.3 : 1);
+      state.population += (targetPopulation - state.population) * 0.16 * growthFactor;
+      state.population = Math.max(0, state.population);
+
+      state.money += income + Math.floor(state.population * 0.05) - Math.ceil(powerUse * 0.03);
+      state.powerSupply = powerSupply;
+      state.powerUse = powerUse;
+
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const tile = state.grid[y][x];
+          if (['residential','commercial','industrial'].includes(tile.type)) {
+            const connected = hasRoadNeighbor(x, y) ? 1 : 0.2;
+            tile.growth += (state.happiness * connected / 100) * (state.powerSupply >= state.powerUse ? 3 : 0.8);
+            tile.growth = Math.min(100, tile.growth);
+          }
+        }
+      }
+    }
+
+    function drawTile(x, y, tileW, tileH, tile, t) {
+      const px = x * tileW;
+      const py = y * tileH;
+
+      const base = TILE_TYPES[tile.type].color;
+      ctx.fillStyle = base;
+      ctx.fillRect(px + 1, py + 1, tileW - 2, tileH - 2);
+
+      if (tile.type === 'road') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.moveTo(px + 4, py + tileH / 2);
+        ctx.lineTo(px + tileW - 4, py + tileH / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (tile.type === 'park') {
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath();
+        ctx.arc(px + tileW * 0.35, py + tileH * 0.45, tileW * 0.17, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.beginPath();
+        ctx.arc(px + tileW * 0.62, py + tileH * 0.53, tileW * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (['residential','commercial','industrial','powerplant'].includes(tile.type)) {
+        const h = 0.15 + (tile.growth / 100) * 0.65;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.fillRect(px + tileW * 0.25, py + tileH * (0.9 - h), tileW * 0.5, tileH * h);
+
+        const glow = 0.55 + Math.sin(t * 0.003 + tile.sparkle) * 0.25;
+        ctx.fillStyle = `rgba(255, 226, 153, ${Math.max(0, glow)})`;
+        ctx.fillRect(px + tileW * 0.33, py + tileH * (0.92 - h), tileW * 0.1, tileH * 0.1);
+        ctx.fillRect(px + tileW * 0.53, py + tileH * (0.86 - h), tileW * 0.1, tileH * 0.1);
+      }
+    }
+
+    function draw(t) {
+      state.cameraPulse += 0.008;
+      const tileW = canvas.width / GRID_W;
+      const tileH = canvas.height / GRID_H;
+
+      const skyShift = Math.sin(state.cameraPulse) * 8;
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, `rgb(${120 + skyShift}, ${200 + skyShift}, 252)`);
+      grad.addColorStop(1, 'rgb(106, 153, 78)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          drawTile(x, y, tileW, tileH, state.grid[y][x], t);
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= GRID_W; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * tileW, 0);
+        ctx.lineTo(x * tileW, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= GRID_H; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * tileH);
+        ctx.lineTo(canvas.width, y * tileH);
+        ctx.stroke();
+      }
+
+      if (state.hovered) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(state.hovered.tx * tileW + 1, state.hovered.ty * tileH + 1, tileW - 2, tileH - 2);
+      }
+
+      statEls.population.textContent = Math.round(state.population).toLocaleString();
+      statEls.money.textContent = `$${Math.round(state.money).toLocaleString()}`;
+      statEls.powerUse.textContent = `${state.powerUse}`;
+      statEls.powerSupply.textContent = `${state.powerSupply}`;
+      statEls.happiness.textContent = `${Math.round(state.happiness)}%`;
+      statEls.month.textContent = state.month;
+
+      requestAnimationFrame(draw);
+    }
+
+    setInterval(() => {
+      state.month += 1;
+      recomputeEconomy();
+      if (state.month % 6 === 0) {
+        setMessage(state.happiness > 60 ? 'Citizens are optimistic and moving in.' : 'Citizens are concerned. Improve roads, parks, and power.', state.happiness <= 40);
+      }
+    }, 1200);
+
+    recomputeEconomy();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
