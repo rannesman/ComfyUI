@@ -1,0 +1,93 @@
+:root {
+  --bg: #09060f;
+  --panel: rgba(10, 14, 32, 0.7);
+  --cyan: #00e7ff;
+  --magenta: #ff4ad8;
+  --gold: #ffc96b;
+  --text: #e6f1ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at 20% 20%, #25173e, var(--bg) 45%);
+  font-family: Inter, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
+}
+
+#game {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+.glass {
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 231, 255, 0.15);
+}
+
+#hud {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  min-width: 320px;
+  max-width: 420px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+#stats {
+  white-space: pre-line;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+#task {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #d9d1ff;
+}
+
+.controls {
+  margin-top: 10px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+#toast {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(22, 14, 33, 0.92);
+  border: 1px solid rgba(255, 74, 216, 0.5);
+  box-shadow: 0 0 22px rgba(255, 74, 216, 0.3);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  font-size: 13px;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
